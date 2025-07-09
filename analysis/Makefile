@@ -4,19 +4,24 @@ CFLAGS = -g -Wno-unused-but-set-variable -Wno-misleading-indentation -Wno-deprec
 LDFLAGS = -lm -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 # Linker FLags
 NAME = analyser
 
-OBJECT_FILES = audio.o load_file.o # All the object files I want to link
+OBJECT_FILES = audio.o load_file.o gui.o audio_gui.o # All the object files I want to link
 
 all: $(NAME) clean # Build tasks
 
 $(NAME): main.c $(OBJECT_FILES) # Compile executable
 	$(CC) -o $(NAME) -no-pie $(CFLAGS) main.c $(OBJECT_FILES) $(LDFLAGS) # Compile and link
 
-audio.o: audio.c # File containing GUI
+audio.o: audio.c 
 	$(CC) -c -o audio.o $(CFLAGS) audio.c
 
-load_file.o: load_file.c # File containing GUI
+load_file.o: load_file.c
 	$(CC) -c -o load_file.o $(CFLAGS) load_file.c
 
+gui.o: gui.c # File containing GUI
+	$(CC) -c -o gui.o $(CFLAGS) gui.c
+
+audio_gui.o: audio_gui.c # File containing GUI
+	$(CC) -c -o audio_gui.o $(CFLAGS) audio_gui.c
 
 .PHONY: clean # Not a real target
 clean: # Cleanup tasks

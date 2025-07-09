@@ -40,7 +40,6 @@ WavChunk *get_wav_chunk(WavChunk chunks[10], char chunk_id[4]) {
     /* Get the chunk with the given id */
     int current_chunk = -1; /* The current chunk */
     while (chunks[++current_chunk].length) { /* Until we reach our pseudo-null-terminator */
-        printf("%.4s\n", chunks[current_chunk].id);
         if (!strncmp(chunks[current_chunk].id, chunk_id, 4)) return &chunks[current_chunk]; /* Check if this is the choonk we want */
     } return 0; /* No choonk */
 }
@@ -109,7 +108,6 @@ Signal *load_wav(char *file_path) {
     WavChunk *data_chunk = get_wav_chunk(chunks, "data"); /* Find the format chunk */
     if (!data_chunk) goto wav_parse_error; /* Error check */
     int num_samples = data_chunk->length / (channels * (format >> 3)); /* Calculate the number of samples */
-    printf("Wav Info:\n    Sample Rate - %d\n    Format - %d\n    Channels - %d\n    Length - %d\n", sample_rate, format, channels, num_samples);
     Signal *signal = empty_signal(sample_rate, num_samples); /* Create a signal with given properties */
     int sample_size = format >> 3; /* Calculate sample size in bytes */
     char *sample; /* Pointer to the sample */
