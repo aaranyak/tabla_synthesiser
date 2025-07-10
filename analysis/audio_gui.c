@@ -43,6 +43,9 @@ void file_uploaded_callback(GtkFileChooserButton *button, Analyser *analyser) {
 
     // Update clipping
     analyser->clip_end = recording->signal->length; /* Full */
+    analyser->clip_start = 0; /* Reset */
+    gtk_range_set_value(GTK_RANGE (analyser->start_slide), 0); /* Update sliders */
+    gtk_range_set_value(GTK_RANGE (analyser->end_slide), 1); /* Ditto */
 }
 
 void draw_waveform(GtkWidget *drawing_area, cairo_t *canvas, Analyser *analyser) {
@@ -57,9 +60,17 @@ void draw_waveform(GtkWidget *drawing_area, cairo_t *canvas, Analyser *analyser)
     cairo_fill(canvas); /* Do the actual drawing */
 
     if (!analyser->recording) return; /* Don't draw more */
+    // Draw the darker background for clip cut.
+    float samples_per_pixel = (float)analyser->recording->signal->length / size_x; /* Samples per pixel */
+    cairo_set_source_rgb(canvas, 0.109375, 0.041015625, 0.1796875); /* Set the colour of the background */
+    cairo_rectangle(canvas, 0, 0, (int)((float)analyser->clip_start / samples_per_pixel), size_y); /* Fill the thing with this rect */
+    cairo_fill(canvas); /* Do the actual drawing */
+    cairo_rectangle(canvas, (int)((float)analyser->clip_end / samples_per_pixel), 0, size_x, size_y); /* Fill with this rect */
+    cairo_fill(canvas); /* Do the actual drawing */
+
+
     // Now, one by one, calculate the samples inside a pixel and draw a line from max to min */
     cairo_set_antialias(canvas, CAIRO_ANTIALIAS_NONE);
-    float samples_per_pixel = (float)analyser->recording->signal->length / size_x; /* Samples per pixel */
     for (int index = 0; index < size_x; index++) { /* Loop through all the pixels in the y axis */
         int sample_start = (int)(samples_per_pixel * index); /* Where to start */
         int sample_end = (int)(samples_per_pixel * index + samples_per_pixel); /* Where to end */
@@ -73,14 +84,26 @@ void draw_waveform(GtkWidget *drawing_area, cairo_t *canvas, Analyser *analyser)
         }
         // Now time to draw the line.
         cairo_set_line_width(canvas, 1); /* A 1px line */
-        cairo_set_source_rgb(canvas, 0.9, 0.9, 0.9); /* Nearly white */
+        int sample_avg = (sample_start + sample_end) / 2; /* Calculate average sample */
+        if (sample_avg >= analyser->clip_start && sample_avg <= analyser->clip_end) cairo_set_source_rgb(canvas, 0.9, 0.9, 0.9); /* Nearly white */
+        else cairo_set_source_rgb(canvas, 0.45, 0.45, 0.45); /* Make it a little darker */
         cairo_move_to(canvas, index, (size_y / 2) - (int)(max * (float)size_y * 0.5)); /* Move to the max point */
         cairo_line_to(canvas, index, (size_y / 2) - (int)(min * (float)size_y * 0.5)); /* Move to the min point */
         cairo_stroke(canvas); /* Draw the stroke */
     }
+    cairo_set_source_rgb(canvas, 0.45, 0.45, 0.45);
     cairo_move_to(canvas, 0, size_y / 2); /* Start drawing main line */
+    cairo_line_to(canvas, (int)((float)analyser->clip_start / samples_per_pixel), size_y / 2); /* Start drawing main line */
+    cairo_stroke(canvas); /* Draw the stroke */
+    cairo_set_source_rgb(canvas, 0.9, 0.9, 0.9);
+    cairo_move_to(canvas, (int)((float)analyser->clip_start / samples_per_pixel), size_y / 2); /* Start drawing main line */
+    cairo_line_to(canvas, (int)((float)analyser->clip_end / samples_per_pixel), size_y / 2); /* Start drawing main line */
+    cairo_stroke(canvas); /* Draw the stroke */
+    cairo_set_source_rgb(canvas, 0.45, 0.45, 0.45);
+    cairo_move_to(canvas, (int)((float)analyser->clip_end / samples_per_pixel), size_y / 2); /* Start drawing main line */
     cairo_line_to(canvas, size_x, size_y / 2); /* Start drawing main line */
     cairo_stroke(canvas); /* Draw the stroke */
+
 }
 
 guint update_waveform_drawing(GtkWidget *canvas) {
@@ -90,23 +113,56 @@ guint update_waveform_drawing(GtkWidget *canvas) {
     return 1; /* Call this again */
 }
 
+void change_clip_start(GtkRange *range, Analyser *analyser) {
+    /* Updates the clip-start value */
+    if (!analyser->recording) return;
+    analyser->clip_start = (int)(analyser->recording->signal->length * gtk_range_get_value(range)); /* Update val */
+}
+
+gchar *format_slider_value(GtkScale *scale, gdouble value, Analyser *analyser) {
+    /* Formats the value properly */ 
+    if (!analyser->recording) return g_strdup_printf("%.3f", value); /* Normally */
+    float time_seconds = value * (float)analyser->recording->signal->length / (float)analyser->recording->signal->rate; /* Seconds */
+    return g_strdup_printf("%.2fs", time_seconds); /* Return it properly */
+}
+
+
+void change_clip_end(GtkRange *range, Analyser *analyser) {
+    /* Updates the clip-start value */
+    if (!analyser->recording) return;
+    analyser->clip_end = (int)(analyser->recording->signal->length * gtk_range_get_value(range)); /* Update val */
+}
+
 GtkWidget *audio_view(Analyser *analyser) {
     /* This widget contains the view that allows loading of audio clips and displaying them */
 
     GtkWidget *container; /* Contains the whole view */
     GtkWidget *top_row, *file_upload, *file_info; /* Contains the button and the text */
-    GtkWidget *bottom_row, *canvas; /* Contains the bottom row and the render canvas */
+    GtkWidget *middle_row, *canvas; /* Contains the bottom row and the render canvas */
+    GtkWidget *bottom_row, *start_slide, *end_slide; /* This contains sliders for clip start and end */
 
     // Create Widgets
     container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0); /* Another one */
     top_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); 
     file_upload = gtk_file_chooser_button_new("Load Audio File", GTK_FILE_CHOOSER_ACTION_OPEN); /* Create the file loader button */
     file_info = gtk_label_new("Audio File - [NONE], Sample Rate - [NONE], Length - [NONE]"); /* Holds info */
-    bottom_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* Add this */
+    middle_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* Add this */
     canvas = gtk_drawing_area_new();  /* Create a new drawing area for this */
     gtk_widget_set_size_request(canvas, -1, 128); /* Set the height of this thing */
     g_signal_connect(canvas, "draw", G_CALLBACK (draw_waveform), analyser); /* Connect draw signal */
     g_idle_add((GSourceFunc)update_waveform_drawing, canvas); /* Keep updating the drawing */
+
+    // Config sliders
+    bottom_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* Add this */
+    start_slide = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 1.0, 0.001); /* This is the scale for the clip start */
+    end_slide = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 1.0, 0.001); /* This is the scale for the clip end */
+    gtk_range_set_value(GTK_RANGE (start_slide), 0); /* Init */
+    gtk_range_set_value(GTK_RANGE (end_slide), 0); /* Init */
+    analyser->start_slide = start_slide; analyser->end_slide = end_slide; /* Set values */
+    g_signal_connect(start_slide, "value-changed", G_CALLBACK (change_clip_start), analyser); /* Add callback to update clip start */
+    g_signal_connect(end_slide, "value-changed", G_CALLBACK (change_clip_end), analyser); /* Add callback to update clip end */
+    g_signal_connect(start_slide, "format-value", G_CALLBACK (format_slider_value), analyser); /* Add callback to set correct value */
+    g_signal_connect(end_slide, "format-value", G_CALLBACK (format_slider_value), analyser); /* Add callback to set correct value */
 
     // Configure Chooser
     GtkFileFilter *filter = gtk_file_filter_new(); /* Create a new filter */
@@ -119,8 +175,11 @@ GtkWidget *audio_view(Analyser *analyser) {
     gtk_box_pack_start(GTK_BOX (container), top_row, 0, 0, 10); /* Put it at the beginning */
     gtk_box_pack_start(GTK_BOX (top_row), file_upload, 0, 0, 20); /* Add the file button */
     gtk_box_pack_end(GTK_BOX (top_row), file_info, 0, 0, 20); /* Add the file info */
-    gtk_box_pack_start(GTK_BOX (container), bottom_row, 0, 0, 10); /* Add the waveform */
-    gtk_box_pack_start(GTK_BOX (bottom_row), canvas, 1, 1, 20); /* Add the waveform drawing */
+    gtk_box_pack_start(GTK_BOX (container), middle_row, 0, 0, 10); /* Add the waveform */
+    gtk_box_pack_start(GTK_BOX (middle_row), canvas, 1, 1, 20); /* Add the waveform drawing */
+    gtk_box_pack_start(GTK_BOX (container), bottom_row, 0, 0, 10); /* Add the sliders */
+    gtk_box_pack_start(GTK_BOX (bottom_row), start_slide, 1, 1, 20); /* Add the start slider */
+    gtk_box_pack_start(GTK_BOX (bottom_row), end_slide, 1, 1, 20); /* Add the end slider */
 
     return container; /* remember */
 }

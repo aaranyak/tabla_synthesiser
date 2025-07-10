@@ -26,6 +26,9 @@ typedef struct analyser { /* This contains all analyser info */
     // Info about the analysis range
     size_t clip_start; /* The beginning of the range */
     size_t clip_end; /* The end of the range */
+
+    GtkWidget *start_slide; /* The clip start widget */
+    GtkWidget *end_slide; /* The clip end widget */
 } Analyser;
 
 int launch_gui(int argc, char **argv);
