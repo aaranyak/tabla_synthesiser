@@ -42,6 +42,14 @@ int change_amplitude(Signal *signal, float factor) {
     return 0; /* No errors */
 }
 
+Signal *trim_signal(Signal *original, size_t start, size_t end) {
+    /* Trims a signal and creates a new one */
+    Signal *trimmed = empty_signal(original->rate, end - start); /* Create signal of correct size */
+    for (int i = 0; i < trimmed->length; i++) /* Loop through samples */
+        trimmed->samples[i] = original->samples[start + i]; /* Keep adding */
+    return trimmed;
+}
+
 void render_samples(Signal *signal, int offset, int samples, int together, int height, int scale) {
     /* Renders a signal to the terminal */
     int *mins = (int*)malloc(sizeof(int) * samples); /* Now we take the means */
