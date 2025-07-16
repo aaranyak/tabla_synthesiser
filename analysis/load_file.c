@@ -112,7 +112,7 @@ Signal *load_wav(char *file_path) {
     int sample_size = format >> 3; /* Calculate sample size in bytes */
     char *sample; /* Pointer to the sample */
     for (int index = 0; index < num_samples; index++) { /* Loop through all the samples */
-        sample = data_chunk->data + index * sample_size; /* Get the position of the sample */
+        sample = data_chunk->data + index * sample_size * channels; /* Get the position of the sample */
         signal->samples[index] = sample_to_float(sample, format); /* Convert the sample to a float and add it */
     } 
     free(file_data); /* Get rid of this stuff */
