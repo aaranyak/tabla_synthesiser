@@ -14,6 +14,7 @@ Analyser *init_analyser() {
     analyser->synthesis = 0; /* Implement later */
     analyser->clip_start = 0; /* No start */
     analyser->clip_end = 0; /* Same */
+    analyser->spec_res = 0; analyser->spec_length = 0; analyser->spectrogram = 0; analyser->spec_scale = 1; /* Reset these for now */
     return analyser;
 }
 
@@ -31,6 +32,7 @@ void app_start(GtkApplication *app, gpointer *user_data) {
     GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0); /* Create a box */
 
     gtk_box_pack_start(GTK_BOX (container), audio_view(analyser), 0, 0, 20); /* A new box */
+    gtk_box_pack_start(GTK_BOX (container), spectrogram_view(analyser), 0, 0, 20); /* A new box */
     
     gtk_container_add(GTK_CONTAINER (window), scrolling); /* Add the scrolled window inside */
     gtk_container_add(GTK_CONTAINER (scrolling), container); /* Add the container inside */

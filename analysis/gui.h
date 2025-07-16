@@ -29,9 +29,15 @@ typedef struct analyser { /* This contains all analyser info */
 
     GtkWidget *start_slide; /* The clip start widget */
     GtkWidget *end_slide; /* The clip end widget */
+
+    // Spectrogram Info.
+    int spec_length, spec_num; /* Spectrograminfo */
+    float spec_res, spec_scale; /* Spectrogram Frequency Res and scaling factor*/
+    float *spectrogram; /* The spec values */
+    GtkWidget *spec_display, *spec_min_freq, *spec_max_freq, *spec_mouse_info; /* The canvas */
 } Analyser;
 
 int launch_gui(int argc, char **argv);
 GtkWidget *audio_view(Analyser *analyser);
-
+GtkWidget *spectrogram_view(Analyser *analyser);
 #endif

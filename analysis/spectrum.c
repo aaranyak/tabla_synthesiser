@@ -14,6 +14,8 @@
  * This should be implemented in a separate function that handles allocation and freeing, while the fft kernel has access to parts of it.
 */
 
+#define min(x, y) ((x) < (y) ? (x) : (y)) /* In case the fmin causes float problems */
+
 complex float *fft(float *samples, int length) {
     /* The recursive kernel for the fast fourier transform */
     if (length == 1) { /* Some tough stuff coming up */
@@ -51,7 +53,7 @@ Spectrum *discrete_fourier_transform(Signal *signal) {
     int is_zero_padded = signal->length ^ (signal->length & -signal->length); /* Check if the number of samples is a power of 2 */    
     int fft_length = is_zero_padded ? 1 << (int)round(log2(signal->length)) : signal->length; /* Calculate closest power of 2 */
     float *fft_input = (float*)malloc(sizeof(float) * fft_length); memset(fft_input, 0, sizeof(float) * fft_length); /* init 0 buffer */
-    memcpy(fft_input, signal->samples, sizeof(float) * fmin(fft_length, signal->length)); /* Copy the samples into the buffer */
+    memcpy(fft_input, signal->samples, sizeof(float) * min(fft_length, signal->length)); /* Copy the samples into the buffer */
     
     complex float *fourier_transform = fft(fft_input, fft_length); /* Compute fourier transform */
 
@@ -62,8 +64,8 @@ Spectrum *discrete_fourier_transform(Signal *signal) {
     spectrum->frequencies = fft_length / 2; /* Ditto */
     spectrum->resolution = (float)signal->rate / (float)fft_length; /* Gap between frequencies */
     for (int i = 0; i < fft_length / 2; i++) { /* Loop through all bins to get the fft */
-        spectrum->amplitudes[i] = 2.0 * cabsf(fourier_transform[i]) / fft_length; /* Calulate amplitude of wave */
-        spectrum->offsets[i] = cargf(fourier_transform[i]) / signal->rate; /* Calculate phase offset of the wave */
+        spectrum->amplitudes[i] = 2.0 * cabsf(fourier_transform[i]) / (float)fft_length; /* Calulate amplitude of wave */
+        spectrum->offsets[i] = cargf(fourier_transform[i]) / (float)signal->rate; /* Calculate phase offset of the wave */
     }
 
     return spectrum;
@@ -74,4 +76,22 @@ void delete_spectrum(Spectrum *spectrum) {
     free(spectrum->amplitudes);
     free(spectrum->offsets);
     free(spectrum);
+}
+
+float *generate_spectrogram(Signal *signal, int fft_samples, int offset) {
+    /* Generates the float values of the spectrogram from a signal */
+    
+    // First we need to calculate the number of values in the spectrogram
+    int steps = (signal->length - fft_samples) / offset; /* Calculate number of ffts we need to take */
+    float *spectrogram = (float*)malloc(sizeof(float) * steps * (fft_samples / 2)); /* Allocate memory for the spectrogram */
+    
+    // Ok, now time to actually generate it.
+    for (int step = 0; step < steps; step++) { /* Loop through each timestep in the spectrogram */
+        Signal *temporary = trim_signal(signal, offset * step, offset * step + fft_samples); /* Trim a section of the signal */
+        Spectrum *spectrum = discrete_fourier_transform(temporary); /* Get the spectrum */
+        memcpy(&spectrogram[step * fft_samples / 2], spectrum->amplitudes, sizeof(float) * fft_samples / 2); /* Copy in the amplitudes */
+        delete_signal(temporary); delete_spectrum(spectrum); /* Clean up */
+    }
+
+    return spectrogram; /* Return the spectrogram */
 }

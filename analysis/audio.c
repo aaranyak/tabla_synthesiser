@@ -45,8 +45,7 @@ int change_amplitude(Signal *signal, float factor) {
 Signal *trim_signal(Signal *original, size_t start, size_t end) {
     /* Trims a signal and creates a new one */
     Signal *trimmed = empty_signal(original->rate, end - start); /* Create signal of correct size */
-    for (int i = 0; i < trimmed->length; i++) /* Loop through samples */
-        trimmed->samples[i] = original->samples[start + i]; /* Keep adding */
+    memcpy(trimmed->samples, &original->samples[start], sizeof(float) * (end - start)); /* Copy the samples into the next array */
     return trimmed;
 }
 

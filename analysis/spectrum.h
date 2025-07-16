@@ -9,10 +9,11 @@ typedef struct spectrum_s {
     float *amplitudes; /* Amplitudes of the stuff */
     float *offsets; /* Phase offsets */
     float resolution; /* Frequency resolution */
-    float frequencies; /* Number of frequencies */
+    int frequencies; /* Number of frequencies */
 } Spectrum; /* The fourier transform struct */
 
 complex float *fft(float *samples, int length);
 Spectrum *discrete_fourier_transform(Signal *signal);
+float *generate_spectrogram(Signal *signal, int fft_samples, int offset);
 void delete_spectrum(Spectrum *spectrum);
 #endif
