@@ -14,7 +14,6 @@ void spec_gen_callback(GtkButton *button, Analyser *analyser) {
     if (analyser->spectrogram) free(analyser->spectrogram); /* Delete the older one */
     analyser->spectrogram = 0; /* For now in case threads mess things up */
     Signal *signal = trim_signal(analyser->recording->signal, analyser->clip_start, analyser->clip_end); /* Trim the signal */
-    printf("Number o Samples - %ld\n", signal->length); /* Print no samples. */
     GtkWidget *spinbutton = (GtkWidget*)gtk_container_get_children(GTK_CONTAINER (gtk_widget_get_parent(GTK_WIDGET (button))))->data;
     int spec_offset = gtk_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton)); /* Set the value */
     spinbutton = (GtkWidget*)gtk_container_get_children(GTK_CONTAINER (gtk_widget_get_parent(GTK_WIDGET (button))))->next->data;
@@ -72,8 +71,8 @@ void draw_spectrogram(GtkWidget *drawing_area, cairo_t *canvas, Analyser *analys
         for (int x = 0; x < size_x; x++) { /* Loop through all the x values */
             int target_freq =  freq_offset + ((float)y / (float)size_y) * ((max_freq - min_freq) / analyser->spec_res); /* Calculate the current target frequency */
             int target_spec = (x * analyser->spec_num) / size_x; /* Calculate the current target spectrum */
-            float amplitude = analyser->spectrogram[target_spec * num_freqs + target_freq] * analyser->spec_scale; /* Get amplitude */
-            set_cairo_hsv(canvas, 1.3 - amplitude * 0.7, 1, 0.1 + amplitude * 0.9); /* In Full Colour */
+            float amplitude = fmin(analyser->spectrogram[target_spec * num_freqs + target_freq] * analyser->spec_scale, 1); /* format */
+            set_cairo_hsv(canvas, 1.0 - amplitude, 1.0, amplitude); /* Set the hsv properly */
             cairo_rectangle(canvas, x, size_y - y, 1, 1); /* A 1px rect */
             cairo_fill(canvas); /* Yay drawing one pixel */
         } /* Odd indentation I know, but what can I do? */
@@ -117,7 +116,7 @@ GtkWidget *spectrogram_view(Analyser *analyser) {
     
     bottom_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* Another one */
     gtk_box_set_homogeneous(GTK_BOX (bottom_row), 0); /* Make better looking box */
-    scale_volume = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL, 0.0, 64.0, 0.001); /* Add a scale for helping better specs */
+    scale_volume = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL, 0.0, 128.0, 0.001); /* Add a scale for helping better specs */
     gtk_range_set_inverted(GTK_RANGE (scale_volume), 1); /* Invert scale */
     gtk_range_set_value(GTK_RANGE (scale_volume), analyser->spec_scale); /* Set this */
     canvas = gtk_drawing_area_new(); /* Figure out the size of this later */
