@@ -7,6 +7,7 @@
 #include "audio.h"
 #include "spectrum.h"
 #include "gui.h"
+#include "filter.h"
 
 void spec_gen_callback(GtkButton *button, Analyser *analyser) {
     /* Generates the spectrogram */

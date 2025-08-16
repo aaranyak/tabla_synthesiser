@@ -3,9 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gtk/gtk.h>
+#include <math.h>
+#include <complex.h>
 #include "audio.h"
 #include "load_file.h"
 #include "gui.h"
+#include "filter.h"
+#include "spectrum.h"
 
 void file_uploaded_callback(GtkFileChooserButton *button, Analyser *analyser) {
     /* Load a file from the chooser */
@@ -31,6 +35,7 @@ void file_uploaded_callback(GtkFileChooserButton *button, Analyser *analyser) {
     if (analyser->recording) { /* If there was one before */
         delete_signal(analyser->recording->signal); free(analyser->recording); /* Free it */
     }
+
     analyser->recording = recording; /* Add the new one */
 
     // Update the text
