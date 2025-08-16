@@ -10,5 +10,8 @@ typedef struct filter_s { /* This is the convolution kernel for a filter */
 
 Filter *delta_function(int length);
 complex float *ifft(complex float *samples, int length);
-
+void fft_convolve(Signal *signal, Filter *filter);
+Filter *lowpass_filter(int length, float frequency, int rate);
+Filter *highpass_filter(int length, float frequency, int rate);
+void delete_filter(Filter *filter);
 #endif
