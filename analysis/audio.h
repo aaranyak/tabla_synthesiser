@@ -15,6 +15,6 @@ int superimpose(Signal *target, Signal *other);
 int change_amplitude(Signal *signal, float factor);
 void render_samples(Signal *signal, int offset, int samples, int together, int height, int scale);
 Signal *trim_signal(Signal *original, size_t start, size_t end);
-
+Signal *copy_signal(Signal *original);
 #endif
 

@@ -33,6 +33,7 @@ void app_start(GtkApplication *app, gpointer *user_data) {
 
     gtk_box_pack_start(GTK_BOX (container), audio_view(analyser), 0, 0, 20); /* A new box */
     gtk_box_pack_start(GTK_BOX (container), spectrogram_view(analyser), 0, 0, 20); /* A new box */
+    gtk_box_pack_start(GTK_BOX (container), amplitudes_view(analyser), 0, 0, 20); /* A new box */
     
     gtk_container_add(GTK_CONTAINER (window), scrolling); /* Add the scrolled window inside */
     gtk_container_add(GTK_CONTAINER (scrolling), container); /* Add the container inside */
