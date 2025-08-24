@@ -49,6 +49,12 @@ Signal *trim_signal(Signal *original, size_t start, size_t end) {
     return trimmed;
 }
 
+Signal *copy_signal(Signal *original) {
+    Signal *signal = empty_signal(original->rate, original->length); /* Create a new signal of correct size */
+    memcpy(signal->samples, original->samples, sizeof(float) * signal->length); /* Copy samples */
+    return signal; /* That's it */
+}
+
 void render_samples(Signal *signal, int offset, int samples, int together, int height, int scale) {
     /* Renders a signal to the terminal */
     int *mins = (int*)malloc(sizeof(int) * samples); /* Now we take the means */

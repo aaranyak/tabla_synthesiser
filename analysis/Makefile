@@ -4,7 +4,7 @@ CFLAGS = -g -Wno-unused-but-set-variable -Wno-parentheses -Wno-misleading-indent
 LDFLAGS = -lm -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 # Linker FLags
 NAME = analyser
 
-OBJECT_FILES = audio.o load_file.o gui.o audio_gui.o spectrum.o spectrogram.o filter.o # All the object files I want to link
+OBJECT_FILES = audio.o load_file.o gui.o audio_gui.o spectrum.o spectrogram.o filter.o amplitudes.o # All the object files I want to link
 
 all: $(NAME) clean # Build tasks
 
@@ -31,6 +31,9 @@ spectrum.o: spectrum.c # File containing GUI
 
 filter.o: filter.c # File containing GUI
 	$(CC) -c -o filter.o $(CFLAGS) filter.c
+
+amplitudes.o: amplitudes.c # File containing GUI
+	$(CC) -c -o amplitudes.o $(CFLAGS) amplitudes.c
 
 .PHONY: clean # Not a real target
 clean: # Cleanup tasks

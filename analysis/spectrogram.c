@@ -122,7 +122,7 @@ GtkWidget *spectrogram_view(Analyser *analyser) {
     gtk_range_set_value(GTK_RANGE (scale_volume), analyser->spec_scale); /* Set this */
     canvas = gtk_drawing_area_new(); /* Figure out the size of this later */
     analyser->spec_display = canvas; analyser->spec_min_freq = min_freq; analyser->spec_max_freq = max_freq;/* Easy updating */
-    gtk_widget_set_size_request(canvas, -1, 256); /* Set horizontal size */
+    gtk_widget_set_size_request(canvas, -1, 512); /* Set horizontal size */
     mouse_info = gtk_label_new("Frequency - , Time - "); /* Some info to debug */
     analyser->spec_mouse_info = mouse_info; /* for updating later */
 
